@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SQL highlighting (ANSI SQL + common HFSQL keywords). Colors are re-applied per theme in QueryView. -->
+<SyntaxDefinition name="SQL" extensions=".sql" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color name="Comment" foreground="#6A9955" />
+  <Color name="String" foreground="#CE9178" />
+  <Color name="QuotedIdentifier" foreground="#9CDCFE" />
+  <Color name="Keyword" foreground="#569CD6" fontWeight="bold" />
+  <Color name="Type" foreground="#4EC9B0" />
+  <Color name="Function" foreground="#DCDCAA" />
+  <Color name="Number" foreground="#B5CEA8" />
+  <Color name="Operator" foreground="#D4D4D4" />
+
+  <RuleSet ignoreCase="true">
+    <Span color="Comment" begin="--" />
+    <Span color="Comment" multiline="true" begin="/\*" end="\*/" />
+    <Span color="String" multiline="true" begin="'" end="'" />
+    <Span color="QuotedIdentifier" begin="&quot;" end="&quot;" />
+    <Span color="QuotedIdentifier" begin="\[" end="\]" />
+
+    <Keywords color="Keyword">
+      <Word>SELECT</Word><Word>FROM</Word><Word>WHERE</Word><Word>AND</Word><Word>OR</Word><Word>NOT</Word>
+      <Word>INSERT</Word><Word>INTO</Word><Word>VALUES</Word><Word>UPDATE</Word><Word>SET</Word><Word>DELETE</Word>
+      <Word>CREATE</Word><Word>ALTER</Word><Word>DROP</Word><Word>TABLE</Word><Word>INDEX</Word><Word>VIEW</Word>
+      <Word>ADD</Word><Word>COLUMN</Word><Word>MODIFY</Word><Word>RENAME</Word><Word>TO</Word><Word>TRUNCATE</Word>
+      <Word>PRIMARY</Word><Word>KEY</Word><Word>FOREIGN</Word><Word>REFERENCES</Word><Word>UNIQUE</Word><Word>CONSTRAINT</Word>
+      <Word>DEFAULT</Word><Word>NULL</Word><Word>IS</Word><Word>IN</Word><Word>EXISTS</Word><Word>BETWEEN</Word><Word>LIKE</Word>
+      <Word>AS</Word><Word>ON</Word><Word>JOIN</Word><Word>INNER</Word><Word>LEFT</Word><Word>RIGHT</Word><Word>FULL</Word>
+      <Word>OUTER</Word><Word>CROSS</Word><Word>UNION</Word><Word>ALL</Word><Word>DISTINCT</Word><Word>TOP</Word>
+      <Word>LIMIT</Word><Word>OFFSET</Word><Word>ORDER</Word><Word>BY</Word><Word>GROUP</Word><Word>HAVING</Word>
+      <Word>ASC</Word><Word>DESC</Word><Word>CASE</Word><Word>WHEN</Word><Word>THEN</Word><Word>ELSE</Word><Word>END</Word>
+      <Word>IF</Word><Word>BEGIN</Word><Word>COMMIT</Word><Word>ROLLBACK</Word><Word>TRANSACTION</Word><Word>WITH</Word>
+      <Word>GRANT</Word><Word>REVOKE</Word><Word>CHECK</Word><Word>CASCADE</Word><Word>AUTO_INCREMENT</Word>
+      <Word>TRUE</Word><Word>FALSE</Word>
+    </Keywords>
+
+    <Keywords color="Type">
+      <Word>INTEGER</Word><Word>INT</Word><Word>SMALLINT</Word><Word>BIGINT</Word><Word>TINYINT</Word>
+      <Word>DECIMAL</Word><Word>NUMERIC</Word><Word>FLOAT</Word><Word>REAL</Word><Word>DOUBLE</Word><Word>PRECISION</Word>
+      <Word>CHAR</Word><Word>VARCHAR</Word><Word>NCHAR</Word><Word>NVARCHAR</Word><Word>TEXT</Word><Word>CLOB</Word>
+      <Word>BLOB</Word><Word>BINARY</Word><Word>VARBINARY</Word><Word>DATE</Word><Word>TIME</Word><Word>DATETIME</Word>
+      <Word>TIMESTAMP</Word><Word>BOOLEAN</Word><Word>BIT</Word><Word>CURRENCY</Word><Word>MONEY</Word><Word>UUID</Word>
+      <Word>SERIAL</Word><Word>DURATION</Word>
+    </Keywords>
+
+    <Keywords color="Function">
+      <Word>COUNT</Word><Word>SUM</Word><Word>AVG</Word><Word>MIN</Word><Word>MAX</Word>
+      <Word>UPPER</Word><Word>LOWER</Word><Word>TRIM</Word><Word>LTRIM</Word><Word>RTRIM</Word><Word>SUBSTRING</Word>
+      <Word>LEN</Word><Word>LENGTH</Word><Word>COALESCE</Word><Word>NULLIF</Word><Word>CAST</Word><Word>CONVERT</Word>
+      <Word>CONCAT</Word><Word>REPLACE</Word><Word>ROUND</Word><Word>ABS</Word><Word>NOW</Word><Word>SYSDATE</Word>
+      <Word>CURRENT_DATE</Word><Word>CURRENT_TIMESTAMP</Word>
+    </Keywords>
+
+    <Rule color="Number">\b0[xX][0-9a-fA-F]+\b|\b\d+(\.\d+)?([eE][+-]?\d+)?\b</Rule>
+    <Rule color="Operator">[=&lt;&gt;!+\-*/%,;()]</Rule>
+  </RuleSet>
+</SyntaxDefinition>

@@ -1,0 +1,252 @@
+<ui:FluentWindow
+    x:Class="HfsqlOdbcStudio.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:views="clr-namespace:HfsqlOdbcStudio.Views"
+    xmlns:vm="clr-namespace:HfsqlOdbcStudio.ViewModels"
+    Title="HFSQL ODBC Studio"
+    Width="1360"
+    Height="860"
+    MinWidth="960"
+    MinHeight="600"
+    d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+    ExtendsContentIntoTitleBar="True"
+    WindowBackdropType="Mica"
+    WindowCornerPreference="Round"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding Query.ExecuteCommand}" />
+        <KeyBinding
+            Key="Enter"
+            Command="{Binding Query.ExecuteCommand}"
+            Modifiers="Control" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="HFSQL ODBC Studio">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/app.png" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!--  Top bar: connection status pill + connection actions + theme  -->
+        <Border
+            Grid.Row="1"
+            Padding="16,8"
+            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border
+                    x:Name="StatusPill"
+                    Grid.Column="0"
+                    Height="32"
+                    Padding="12,0,16,0"
+                    VerticalAlignment="Center"
+                    CornerRadius="16"
+                    ToolTip="{Binding ConnectionToolTip}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource SystemFillColorNeutralBackgroundBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <Ellipse
+                            Width="10"
+                            Height="10"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{DynamicResource SystemFillColorNeutralBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                            Text="{Binding ConnectionText}" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="16,0,0,0"
+                    Orientation="Horizontal">
+                    <ui:Button
+                        Appearance="Primary"
+                        Command="{Binding QuickConnectCommand}"
+                        Icon="{ui:SymbolIcon PlugConnected24}"
+                        ToolTip="Connect with the last used profile"
+                        Visibility="{Binding HasQuickConnect, Converter={StaticResource BoolToVis}}">
+                        <TextBlock>
+                            <Run Text="Connect to" />
+                            <Run FontWeight="SemiBold" Text="{Binding QuickConnectName, Mode=OneWay}" />
+                        </TextBlock>
+                    </ui:Button>
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Command="{Binding OpenConnectionCommand}"
+                        Content="Connection…"
+                        Icon="{ui:SymbolIcon Settings24}"
+                        ToolTip="Driver, server, DSN, connection string and saved profiles" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Command="{Binding DisconnectCommand}"
+                        Content="Disconnect"
+                        Icon="{ui:SymbolIcon PlugDisconnected24}"
+                        Visibility="{Binding IsConnected, Converter={StaticResource BoolToVis}}" />
+                    <ui:ProgressRing
+                        Width="20"
+                        Height="20"
+                        Margin="12,0,0,0"
+                        IsIndeterminate="True"
+                        Visibility="{Binding IsConnecting, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+
+                <ui:Button
+                    Grid.Column="3"
+                    Width="40"
+                    Height="32"
+                    Padding="0"
+                    Appearance="Transparent"
+                    AutomationProperties.Name="Toggle theme"
+                    Command="{Binding ToggleThemeCommand}"
+                    ToolTip="{Binding ThemeToolTip}">
+                    <ui:SymbolIcon FontSize="18" Symbol="{Binding ThemeIcon}" />
+                </ui:Button>
+            </Grid>
+        </Border>
+
+        <!--  Explorer | splitter | workspace  -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    x:Name="ExplorerColumn"
+                    Width="300"
+                    MinWidth="200"
+                    MaxWidth="700" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="420" />
+            </Grid.ColumnDefinitions>
+
+            <views:ExplorerView Grid.Column="0" DataContext="{Binding Explorer}" />
+
+            <GridSplitter
+                Grid.Column="1"
+                Width="5"
+                HorizontalAlignment="Stretch"
+                Background="Transparent"
+                Cursor="SizeWE"
+                ResizeBehavior="PreviousAndNext"
+                ResizeDirection="Columns" />
+            <Rectangle
+                Grid.Column="1"
+                Width="1"
+                HorizontalAlignment="Center"
+                Fill="{DynamicResource DividerStrokeColorDefaultBrush}"
+                IsHitTestVisible="False" />
+
+            <views:QueryView Grid.Column="2" />
+        </Grid>
+
+        <!--  Status bar  -->
+        <Border
+            Grid.Row="3"
+            Padding="16,6"
+            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon
+                        Margin="0,0,8,0"
+                        FontSize="14"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Symbol="Database24" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="{Binding ConnectionDetail}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTip="{Binding ConnectionToolTip}" />
+                </StackPanel>
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="24,0,0,0"
+                    Orientation="Horizontal">
+                    <ui:SymbolIcon
+                        Margin="0,0,6,0"
+                        FontSize="14"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Symbol="Timer24" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <Run Text="Last execution:" />
+                        <Run Text="{Binding Query.LastExecutionText, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+                <StackPanel
+                    Grid.Column="2"
+                    Margin="24,0,0,0"
+                    Orientation="Horizontal">
+                    <ui:SymbolIcon
+                        Margin="0,0,6,0"
+                        FontSize="14"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Symbol="TableSimple24" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                        <Run Text="Rows:" />
+                        <Run Text="{Binding Query.RowCountText, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ui:SnackbarPresenter
+            x:Name="SnackbarPresenter"
+            Grid.Row="0"
+            Grid.RowSpan="4"
+            Margin="24,0,24,48"
+            VerticalAlignment="Bottom" />
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,461 @@
+<UserControl
+    x:Class="HfsqlOdbcStudio.Views.QueryView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="clr-namespace:HfsqlOdbcStudio.Models"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:views="clr-namespace:HfsqlOdbcStudio.Views"
+    xmlns:vm="clr-namespace:HfsqlOdbcStudio.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+    d:DesignHeight="700"
+    d:DesignWidth="1000"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="LogEntryTemplate" DataType="{x:Type models:LogEntry}">
+            <Grid Margin="0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon
+                    x:Name="LevelIcon"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Top"
+                    FontSize="16"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Symbol="Info24" />
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Top"
+                    FontFamily="{StaticResource MonoFont}"
+                    FontSize="12"
+                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                    Text="{Binding TimeText}" />
+                <StackPanel Grid.Column="2">
+                    <TextBox
+                        FontFamily="{DynamicResource ContentControlThemeFontFamily}"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource SelectableText}"
+                        Text="{Binding Title, Mode=OneWay}" />
+                    <TextBox
+                        Margin="0,4,0,0"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource SelectableText}"
+                        Text="{Binding Sql, Mode=OneWay}"
+                        Visibility="{Binding HasSql, Converter={StaticResource BoolToVis}}" />
+                    <Border
+                        x:Name="DetailBorder"
+                        Margin="0,6,0,0"
+                        Padding="8"
+                        Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="4"
+                        Visibility="{Binding HasDetail, Converter={StaticResource BoolToVis}}">
+                        <TextBox Style="{StaticResource SelectableText}" Text="{Binding Detail, Mode=OneWay}" />
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:LogLevel.Success}">
+                    <Setter TargetName="LevelIcon" Property="Symbol" Value="CheckmarkCircle24" />
+                    <Setter TargetName="LevelIcon" Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:LogLevel.Warning}">
+                    <Setter TargetName="LevelIcon" Property="Symbol" Value="Warning24" />
+                    <Setter TargetName="LevelIcon" Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                    <Setter TargetName="DetailBorder" Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Level}" Value="{x:Static models:LogLevel.Error}">
+                    <Setter TargetName="LevelIcon" Property="Symbol" Value="ErrorCircle24" />
+                    <Setter TargetName="LevelIcon" Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                    <Setter TargetName="DetailBorder" Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HistoryTemplate" DataType="{x:Type models:HistoryEntry}">
+            <Grid Margin="0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon
+                    x:Name="StatusIcon"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                    Symbol="DismissCircle24" />
+                <StackPanel Grid.Column="1">
+                    <TextBlock
+                        FontFamily="{StaticResource MonoFont}"
+                        FontSize="12"
+                        Text="{Binding OneLine}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTip="{Binding Sql}" />
+                    <TextBlock Style="{StaticResource CaptionText}">
+                        <Run Text="{Binding TimeText, Mode=OneWay}" />
+                        <Run Text="·" />
+                        <Run Text="{Binding Summary, Mode=OneWay}" />
+                        <Run Text="·" />
+                        <Run Text="{Binding ElapsedMs, Mode=OneWay, StringFormat={}{0:N0} ms}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Success}" Value="True">
+                    <Setter TargetName="StatusIcon" Property="Symbol" Value="CheckmarkCircle24" />
+                    <Setter TargetName="StatusIcon" Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <Style x:Key="ResultCellStyle" TargetType="TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="TabHeaderIcon" TargetType="ui:SymbolIcon">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="8,16,16,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition x:Name="EditorRow" Height="2*" MinHeight="120" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="3*" MinHeight="140" />
+        </Grid.RowDefinitions>
+
+        <!--  Toolbar  -->
+        <Grid Grid.Row="0" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Template" />
+                <ComboBox
+                    Width="230"
+                    DisplayMemberPath="Display"
+                    ItemsSource="{Binding Query.StatementTypes}"
+                    SelectedItem="{Binding Query.SelectedStatementType}"
+                    ToolTip="Statement type: inserts a sample template (uses the table selected in the explorer)" />
+                <ui:Button
+                    Width="36"
+                    Height="34"
+                    Margin="8,0,0,0"
+                    Padding="0"
+                    AutomationProperties.Name="Insert template"
+                    Command="{Binding Query.InsertTemplateCommand}"
+                    ToolTip="Insert the template again">
+                    <ui:SymbolIcon FontSize="16" Symbol="DocumentText24" />
+                </ui:Button>
+            </StackPanel>
+
+            <Rectangle
+                Grid.Column="1"
+                Width="1"
+                Margin="16,4"
+                Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <ui:Button
+                    Appearance="Primary"
+                    Command="{Binding Query.ExecuteCommand}"
+                    Content="Execute"
+                    Icon="{ui:SymbolIcon Play24}"
+                    ToolTip="Execute (Ctrl+Enter or F5). Runs only the selected text if there is a selection." />
+                <ui:Button
+                    Margin="8,0,0,0"
+                    Appearance="Danger"
+                    Command="{Binding Query.ExecuteCancelCommand}"
+                    Content="Cancel"
+                    Icon="{ui:SymbolIcon Stop24}"
+                    Visibility="{Binding Query.ExecuteCommand.IsRunning, Converter={StaticResource BoolToVis}}" />
+                <ui:ProgressRing
+                    Width="18"
+                    Height="18"
+                    Margin="12,0,6,0"
+                    IsIndeterminate="True"
+                    Visibility="{Binding Query.ExecuteCommand.IsRunning, Converter={StaticResource BoolToVis}}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{StaticResource CaptionText}"
+                    Text="{Binding Query.ExecutingText}" />
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="3"
+                Margin="16,0,0,0"
+                Orientation="Horizontal"
+                ToolTip="Maximum number of rows loaded into the grid (0 = unlimited)">
+                <TextBlock
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Max rows" />
+                <ui:TextBox
+                    Width="88"
+                    ClearButtonEnabled="False"
+                    Text="{Binding Query.MaxRows, UpdateSourceTrigger=LostFocus}" />
+            </StackPanel>
+
+            <ui:Button
+                Grid.Column="5"
+                Command="{Binding DdlTest.RunCommand}"
+                Content="Run DDL Capability Test"
+                Icon="{ui:SymbolIcon Beaker24}"
+                ToolTip="Create, alter, index and drop ZZ_ODBC_TEST to see which DDL the driver passes through" />
+        </Grid>
+
+        <!--  SQL editor  -->
+        <Border
+            Grid.Row="1"
+            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <avalon:TextEditor
+                x:Name="SqlEditor"
+                Padding="8"
+                Background="Transparent"
+                FontFamily="{StaticResource MonoFont}"
+                FontSize="14"
+                Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                HorizontalScrollBarVisibility="Auto"
+                LineNumbersForeground="{DynamicResource TextFillColorTertiaryBrush}"
+                ShowLineNumbers="True"
+                VerticalScrollBarVisibility="Auto"
+                WordWrap="False" />
+        </Border>
+
+        <GridSplitter
+            Grid.Row="2"
+            Height="8"
+            HorizontalAlignment="Stretch"
+            Background="Transparent"
+            Cursor="SizeNS"
+            ResizeBehavior="PreviousAndNext"
+            ResizeDirection="Rows" />
+        <Rectangle
+            Grid.Row="2"
+            Width="40"
+            Height="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Fill="{DynamicResource ControlStrokeColorDefaultBrush}"
+            IsHitTestVisible="False"
+            RadiusX="2"
+            RadiusY="2" />
+
+        <!--  Results / Messages / History / DDL test  -->
+        <TabControl Grid.Row="3" SelectedIndex="{Binding Query.SelectedTabIndex}">
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Style="{StaticResource TabHeaderIcon}" Symbol="TableSimple24" />
+                        <TextBlock Text="Results" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,8" Visibility="{Binding Query.HasResults, Converter={StaticResource BoolToVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Text="{Binding Query.ResultSummary}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Appearance="Transparent"
+                            Command="{Binding Query.CopyResultsCommand}"
+                            Content="Copy all"
+                            Icon="{ui:SymbolIcon Copy24}"
+                            ToolTip="Copy all rows with headers as tab-separated text (Ctrl+C copies the selection)" />
+                    </Grid>
+                    <DataGrid
+                        x:Name="ResultsGrid"
+                        Grid.Row="1"
+                        AutoGenerateColumns="True"
+                        AutoGeneratingColumn="OnAutoGeneratingColumn"
+                        CanUserAddRows="False"
+                        CanUserDeleteRows="False"
+                        CanUserReorderColumns="True"
+                        CanUserSortColumns="True"
+                        ClipboardCopyMode="IncludeHeader"
+                        EnableColumnVirtualization="True"
+                        EnableRowVirtualization="True"
+                        HeadersVisibility="Column"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding Query.Results}"
+                        SelectionMode="Extended"
+                        SelectionUnit="CellOrRowHeader"
+                        Visibility="{Binding Query.HasResults, Converter={StaticResource BoolToVis}}">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style BasedOn="{StaticResource {x:Type DataGridColumnHeader}}" TargetType="DataGridColumnHeader">
+                                <Setter Property="ContentTemplate">
+                                    <Setter.Value>
+                                        <DataTemplate>
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding}" />
+                                        </DataTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                    </DataGrid>
+                    <StackPanel
+                        Grid.Row="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding Query.HasResults, Converter={StaticResource InverseBoolToVis}}">
+                        <ui:SymbolIcon
+                            Margin="0,0,0,8"
+                            FontSize="32"
+                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                            Symbol="TableSimple24" />
+                        <TextBlock Style="{StaticResource EmptyStateText}" Text="No results yet" />
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            Style="{StaticResource CaptionText}"
+                            Text="Write a query and press Ctrl+Enter or F5. Statements that return rows appear here."
+                            TextAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Style="{StaticResource TabHeaderIcon}" Symbol="TextBulletListSquare24" />
+                        <TextBlock Text="Messages" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel
+                        Margin="0,0,0,8"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <ui:Button
+                            Appearance="Transparent"
+                            Command="{Binding Query.CopyMessagesCommand}"
+                            Content="Copy all"
+                            Icon="{ui:SymbolIcon Copy24}" />
+                        <ui:Button
+                            Margin="8,0,0,0"
+                            Appearance="Transparent"
+                            Command="{Binding Query.ClearMessagesCommand}"
+                            Content="Clear"
+                            Icon="{ui:SymbolIcon Delete24}" />
+                    </StackPanel>
+                    <ListBox
+                        Grid.Row="1"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        ItemTemplate="{StaticResource LogEntryTemplate}"
+                        ItemsSource="{Binding Query.Messages}"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        VirtualizingPanel.ScrollUnit="Pixel" />
+                    <TextBlock
+                        Grid.Row="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource EmptyStateText}"
+                        Text="Statements and their results or driver errors are logged here"
+                        Visibility="{Binding Query.Messages.Count, Converter={StaticResource NotEmptyToVis}, ConverterParameter=invert}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Style="{StaticResource TabHeaderIcon}" Symbol="History24" />
+                        <TextBlock Text="History" />
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource CaptionText}"
+                            Text="Last 100 statements. Double-click to load into the editor." />
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                            <ui:Button
+                                Appearance="Transparent"
+                                Command="{Binding Query.LoadHistoryCommand}"
+                                CommandParameter="{Binding Query.SelectedHistory}"
+                                Content="Load into editor"
+                                Icon="{ui:SymbolIcon ArrowUpload24}" />
+                            <ui:Button
+                                Margin="8,0,0,0"
+                                Appearance="Transparent"
+                                Command="{Binding Query.ClearHistoryCommand}"
+                                Content="Clear"
+                                Icon="{ui:SymbolIcon Delete24}" />
+                        </StackPanel>
+                    </Grid>
+                    <ListBox
+                        x:Name="HistoryList"
+                        Grid.Row="1"
+                        HorizontalContentAlignment="Stretch"
+                        Background="Transparent"
+                        ItemTemplate="{StaticResource HistoryTemplate}"
+                        ItemsSource="{Binding Query.History}"
+                        MouseDoubleClick="OnHistoryDoubleClick"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        SelectedItem="{Binding Query.SelectedHistory}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource EmptyStateText}"
+                        Text="No statements executed yet"
+                        Visibility="{Binding Query.History.Count, Converter={StaticResource NotEmptyToVis}, ConverterParameter=invert}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Style="{StaticResource TabHeaderIcon}" Symbol="Beaker24" />
+                        <TextBlock Text="DDL Test" />
+                    </StackPanel>
+                </TabItem.Header>
+                <views:DdlTestView Margin="0,8,0,0" DataContext="{Binding DdlTest}" />
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
