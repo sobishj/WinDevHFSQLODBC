@@ -34,7 +34,6 @@ public partial class App : Application
             var queries = new QueryService(connections);
             var profiles = new ProfileService();
             var history = new HistoryService();
-            var ddl = new DdlTestService(connections, schema);
             var dialogs = new DialogService();
             var snackbar = new SnackbarService();
             var notify = new NotificationService(snackbar);
@@ -42,8 +41,7 @@ public partial class App : Application
 
             var explorer = new ExplorerViewModel(schema, connections, notify, settings);
             var query = new QueryViewModel(queries, schema, connections, explorer, dialogs, notify, history, settings);
-            var ddlTest = new DdlTestViewModel(ddl, connections, dialogs, notify, explorer);
-            var main = new MainViewModel(connections, profiles, dialogs, notify, theme, settings, explorer, query, ddlTest,
+            var main = new MainViewModel(connections, profiles, dialogs, notify, explorer, query,
                 () => new ConnectionViewModel(drivers, profiles, connections, notify, dialogs));
 
             var window = new MainWindow(main, settings, theme);

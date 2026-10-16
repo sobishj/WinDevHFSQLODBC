@@ -106,54 +106,14 @@ public sealed class NotificationService(ISnackbarService snackbar) : INotificati
     }
 }
 
-/// <summary>Light/dark theme following Windows, with a manual override. One fixed accent color.</summary>
+/// <summary>Applies the light Fluent theme with one fixed accent color.</summary>
 public sealed class AppThemeService
 {
     public static readonly Color Accent = Color.FromRgb(0x00, 0x67, 0xC0);
 
-    private Window? _window;
-
-    public ThemeMode Mode { get; private set; } = ThemeMode.System;
-
-    public bool IsDark => ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark;
-
-    public event EventHandler? ThemeChanged;
-
-    public void Initialize(Window window, ThemeMode mode)
+    public void Initialize(Window window)
     {
-        _window = window;
-        ApplicationThemeManager.Changed += (theme, _) =>
-        {
-            ApplicationAccentColorManager.Apply(Accent, theme, false);
-            ThemeChanged?.Invoke(this, EventArgs.Empty);
-        };
-        Apply(mode);
+        ApplicationThemeManager.Apply(ApplicationTheme.Light, WindowBackdropType.Mica, false);
+        ApplicationAccentColorManager.Apply(Accent, ApplicationTheme.Light, false);
     }
-
-    public void Apply(ThemeMode mode)
-    {
-        Mode = mode;
-        if (_window is null) return;
-
-        if (mode == ThemeMode.System)
-        {
-            ApplicationThemeManager.ApplySystemTheme(false);
-            SystemThemeWatcher.Watch(_window, WindowBackdropType.Mica, false);
-        }
-        else
-        {
-            SystemThemeWatcher.UnWatch(_window);
-            ApplicationThemeManager.Apply(mode == ThemeMode.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light, WindowBackdropType.Mica, false);
-        }
-
-        ApplicationAccentColorManager.Apply(Accent, ApplicationThemeManager.GetAppTheme(), false);
-        ThemeChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    public ThemeMode Next() => Mode switch
-    {
-        ThemeMode.System => ThemeMode.Light,
-        ThemeMode.Light => ThemeMode.Dark,
-        _ => ThemeMode.System,
-    };
 }

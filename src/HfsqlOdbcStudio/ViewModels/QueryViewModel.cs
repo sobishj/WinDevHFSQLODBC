@@ -27,7 +27,6 @@ public sealed partial class QueryViewModel : ObservableObject
     public const int ResultsTab = 0;
     public const int MessagesTab = 1;
     public const int HistoryTab = 2;
-    public const int DdlTestTab = 3;
     private const int MaxMessages = 2000;
 
     private readonly IQueryService _queries;

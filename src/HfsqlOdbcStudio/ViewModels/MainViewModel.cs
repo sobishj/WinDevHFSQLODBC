@@ -14,37 +14,27 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IProfileService _profiles;
     private readonly IDialogService _dialogs;
     private readonly INotificationService _notify;
-    private readonly AppThemeService _theme;
-    private readonly ISettingsService _settings;
     private readonly Func<ConnectionViewModel> _connectionVmFactory;
     private ConnectionProfile? _lastProfile;
 
     public MainViewModel(IConnectionService connections, IProfileService profiles, IDialogService dialogs, INotificationService notify,
-        AppThemeService theme, ISettingsService settings, ExplorerViewModel explorer, QueryViewModel query, DdlTestViewModel ddlTest,
+        ExplorerViewModel explorer, QueryViewModel query,
         Func<ConnectionViewModel> connectionVmFactory)
     {
         _connections = connections;
         _profiles = profiles;
         _dialogs = dialogs;
         _notify = notify;
-        _theme = theme;
-        _settings = settings;
         _connectionVmFactory = connectionVmFactory;
         Explorer = explorer;
         Query = query;
-        DdlTest = ddlTest;
 
         _connections.StateChanged += (_, _) => OnConnectionStateChanged();
-        DdlTest.Started += (_, _) => Query.SelectedTabIndex = QueryViewModel.DdlTestTab;
-        _theme.ThemeChanged += (_, _) => UpdateThemeIcon();
-        UpdateThemeIcon();
     }
 
     public ExplorerViewModel Explorer { get; }
 
     public QueryViewModel Query { get; }
-
-    public DdlTestViewModel DdlTest { get; }
 
     [ObservableProperty]
     private bool _isConnected;
@@ -64,12 +54,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isConnecting;
-
-    [ObservableProperty]
-    private SymbolRegular _themeIcon = SymbolRegular.DarkTheme24;
-
-    [ObservableProperty]
-    private string _themeToolTip = "";
 
     public bool HasQuickConnect => !IsConnected && !string.IsNullOrEmpty(QuickConnectName);
 
@@ -131,24 +115,6 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _connections.Disconnect();
         _notify.Info("Disconnected", "The connection was closed.");
-    }
-
-    [RelayCommand]
-    private void ToggleTheme()
-    {
-        _theme.Apply(_theme.Next());
-        _settings.Current.Theme = _theme.Mode;
-        _settings.Save();
-    }
-
-    private void UpdateThemeIcon()
-    {
-        (ThemeIcon, ThemeToolTip) = _theme.Mode switch
-        {
-            ThemeMode.Light => (SymbolRegular.WeatherSunny24, "Theme: Light (click for Dark)"),
-            ThemeMode.Dark => (SymbolRegular.WeatherMoon24, "Theme: Dark (click to follow Windows)"),
-            _ => (SymbolRegular.DarkTheme24, "Theme: follows Windows (click for Light)"),
-        };
     }
 
     private void OnConnectionStateChanged()

@@ -52,6 +52,14 @@ Click **Connection…** in the top bar.
 
 **Test Connection** shows the driver name, driver file and version, DBMS name/version and server version. On failure it shows the full ODBC error.
 
+**Data file folder (HFSQL database folder)**: the HFSQL ODBC driver reads and writes table files (`.fic` / `.ndx` / `.mmo`) relative to the app's working folder. For example, `CREATE TABLE` creates the table's files there. While you're connected, the app uses this folder as its working folder for **every** operation. Set it to the database folder of the HFSQL server:
+* a local path when the app runs on the server, e.g. `C:\HVW4HFCS\BDD\IndiaTest`
+* a network path from another PC, e.g. `\\192.168.11.142\C$\HVW4HFCS\BDD\IndiaTest` or a share. The PC needs write access.
+
+The folder is checked for existence and write access when you connect. Leave it empty to use the app's folder.
+
+**ODBC access layer**: Auto (default), Managed (System.Data.Odbc) or Native (direct `odbc32.dll`). See *Troubleshooting*.
+
 Profiles are saved to `%AppData%\HfsqlOdbcStudio\profiles.json`. Passwords (and raw connection strings) are encrypted with **DPAPI, CurrentUser scope**. The last used profile is offered as **Connect to "…"** at startup.
 
 ### 2. Explorer (left)
@@ -67,21 +75,6 @@ Lists user tables from `GetSchema("Tables")`, with search and a *Show system tab
 * **Messages**: a timestamped log of every statement and its result or full ODBC error.
 * **History**: the last 100 statements. Double-click one to load it into the editor.
 
-### 4. Run the DDL capability test
-1. Connect to the database.
-2. Click **Run DDL Capability Test** (toolbar) or **Run test** on the *DDL Test* tab.
-3. If `ZZ_ODBC_TEST` already exists, the app asks whether to drop it first.
-4. The steps run in order. Each step is isolated, so a failure never stops the next one:
-   1. `CREATE TABLE ZZ_ODBC_TEST (ID INTEGER, Name VARCHAR(50))`
-   2. Verify the table exists (schema)
-   3. `INSERT` a row, then `SELECT` it back
-   4. `ALTER TABLE ZZ_ODBC_TEST ADD Extra VARCHAR(20)` (falls back to `ADD COLUMN …`), then verify the column
-   5. `ALTER TABLE ZZ_ODBC_TEST DROP COLUMN Extra` (falls back to `DROP Extra`), then verify
-   6. `CREATE INDEX IDX_ZZ_ODBC_TEST_NAME ON ZZ_ODBC_TEST (Name)`
-   7. `DROP TABLE ZZ_ODBC_TEST`, then verify it is gone
-5. The checklist shows PASSED/FAILED per step, with each attempted SQL and the driver's exact error.
-6. **Export report** saves a `.md` or `.txt` file. It contains the date/time, machine, Windows user, driver name/file/version, DBMS and server version, database, the masked connection string, and each step's SQL and result. **The password is never included.**
-
 ---
 
 ## Files and logs
@@ -89,7 +82,7 @@ Lists user tables from `GetSchema("Tables")`, with search and a *Show system tab
 | Path | Content |
 |---|---|
 | `%AppData%\HfsqlOdbcStudio\profiles.json` | Connection profiles (secrets DPAPI-encrypted) |
-| `%AppData%\HfsqlOdbcStudio\settings.json` | Window position/size, theme, max rows |
+| `%AppData%\HfsqlOdbcStudio\settings.json` | Window position/size, max rows |
 | `%AppData%\HfsqlOdbcStudio\history.json` | Last 100 statements |
 | `%AppData%\HfsqlOdbcStudio\logs\app-YYYYMMDD.log` | Diagnostics and unhandled exceptions (no passwords) |
 
@@ -100,18 +93,18 @@ HfsqlOdbcStudio.sln
 build.ps1                      publish → dist\HfsqlOdbcStudio.exe
 src/HfsqlOdbcStudio/
   Assets/        app.ico, app.png, Sql.xshd (SQL highlighting)
-  Models/        profiles, schema objects, query results, DDL test steps, settings
+  Models/        profiles, schema objects, query results, settings
   Services/      OdbcDriverService, ConnectionService, SchemaService, QueryService,
-                 ProfileService/SettingsService/HistoryService, DdlTestService,
-                 UI services (dialogs, snackbar notifications, theme)
+                 ProfileService/SettingsService/HistoryService, native odbc32 layer,
+                 UI services (dialogs, snackbar notifications)
   Helpers/       SQL lexer/splitter, SqlAnalyzer, SqlTemplates,
-                 ConnectionStringFactory, OdbcErrorFormatter, paths/logging/JSON
-  ViewModels/    Main, Connection, Explorer, Query, DdlTest (CommunityToolkit.Mvvm)
-  Views/         MainWindow, ConnectionWindow, ExplorerView, QueryView, DdlTestView
+                 ConnectionStringFactory, OdbcErrorFormatter, DataFolder, paths/logging/JSON
+  ViewModels/    Main, Connection, Explorer, Query (CommunityToolkit.Mvvm)
+  Views/         MainWindow, ConnectionWindow, ExplorerView, QueryView
   Converters/
 ```
 
-Tech: .NET 8, WPF, MVVM (CommunityToolkit.Mvvm), System.Data.Odbc, WPF-UI (Fluent / Mica, light and dark themes that follow Windows, with a manual toggle in the top bar), AvalonEdit.
+Tech: .NET 8, WPF, MVVM (CommunityToolkit.Mvvm), System.Data.Odbc, WPF-UI (Fluent, light theme), AvalonEdit.
 
 ## Troubleshooting
 
@@ -120,8 +113,9 @@ Tech: .NET 8, WPF, MVVM (CommunityToolkit.Mvvm), System.Data.Odbc, WPF-UI (Fluen
   * **Native** always uses the native layer.
   * **Managed** always uses System.Data.Odbc.
 
-  Both layers send your SQL to the driver unchanged. The layer in use is shown in the connection details and in the DDL test report.
+  Both layers send your SQL to the driver unchanged. The layer in use is shown in the connection details.
 
 * **"Data source name not found and no default driver specified" (IM002)**: the driver or DSN name doesn't exist in the **64-bit** ODBC configuration. Install the 64-bit HFSQL ODBC driver, or create the DSN with the 64-bit ODBC administrator.
 * **Connection works but keywords seem ignored**: HFSQL connection-string keywords differ between driver versions. Switch to *Connection string (advanced)* and adjust the keys, for example `Server Name` / `Server Port`.
-* **An ALTER form fails**: that is the result the tool exists to find. The exact driver error is in the Messages tab and the report.
+* **CREATE TABLE "succeeds" but the table isn't on the server**: the driver created the table's files in the app's working folder. Set the **Data file folder** to the server's database folder. The Messages tab shows where a local `.fic` was found.
+* **A statement fails**: the exact driver error is in the Messages tab.

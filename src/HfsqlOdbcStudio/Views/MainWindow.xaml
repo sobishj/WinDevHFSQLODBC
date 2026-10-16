@@ -132,18 +132,6 @@
                         IsIndeterminate="True"
                         Visibility="{Binding IsConnecting, Converter={StaticResource BoolToVis}}" />
                 </StackPanel>
-
-                <ui:Button
-                    Grid.Column="3"
-                    Width="40"
-                    Height="32"
-                    Padding="0"
-                    Appearance="Transparent"
-                    AutomationProperties.Name="Toggle theme"
-                    Command="{Binding ToggleThemeCommand}"
-                    ToolTip="{Binding ThemeToolTip}">
-                    <ui:SymbolIcon FontSize="18" Symbol="{Binding ThemeIcon}" />
-                </ui:Button>
             </Grid>
         </Border>
 

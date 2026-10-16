@@ -7,7 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="clr-namespace:HfsqlOdbcStudio.Models"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-    xmlns:views="clr-namespace:HfsqlOdbcStudio.Views"
     xmlns:vm="clr-namespace:HfsqlOdbcStudio.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
     d:DesignHeight="700"
@@ -219,13 +218,6 @@
                     ClearButtonEnabled="False"
                     Text="{Binding Query.MaxRows, UpdateSourceTrigger=LostFocus}" />
             </StackPanel>
-
-            <ui:Button
-                Grid.Column="5"
-                Command="{Binding DdlTest.RunCommand}"
-                Content="Run DDL Capability Test"
-                Icon="{ui:SymbolIcon Beaker24}"
-                ToolTip="Create, alter, index and drop ZZ_ODBC_TEST to see which DDL the driver passes through" />
         </Grid>
 
         <!--  SQL editor  -->
@@ -445,16 +437,6 @@
                         Text="No statements executed yet"
                         Visibility="{Binding Query.History.Count, Converter={StaticResource NotEmptyToVis}, ConverterParameter=invert}" />
                 </Grid>
-            </TabItem>
-
-            <TabItem>
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Style="{StaticResource TabHeaderIcon}" Symbol="Beaker24" />
-                        <TextBlock Text="DDL Test" />
-                    </StackPanel>
-                </TabItem.Header>
-                <views:DdlTestView Margin="0,8,0,0" DataContext="{Binding DdlTest}" />
             </TabItem>
         </TabControl>
     </Grid>

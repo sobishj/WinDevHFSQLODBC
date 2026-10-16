@@ -15,7 +15,7 @@ public partial class MainWindow
         DataContext = viewModel;
         InitializeComponent();
         RestorePlacement();
-        theme.Initialize(this, settings.Current.Theme);
+        theme.Initialize(this);
     }
 
     protected override void OnClosing(CancelEventArgs e)
