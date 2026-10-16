@@ -63,7 +63,7 @@ The folder is checked for existence and write access when you connect. Leave it 
 Profiles are saved to `%AppData%\HfsqlOdbcStudio\profiles.json`. Passwords (and raw connection strings) are encrypted with **DPAPI, CurrentUser scope**. The last used profile is offered as **Connect to "…"** at startup.
 
 ### 2. Explorer (left)
-Lists user tables from `GetSchema("Tables")`, with search and a *Show system tables* toggle. Expand a table to see its columns (name, type, size, nullable). Right-click a table for: **Select top 100**, **Generate CREATE template**, **Generate ALTER template**, **Generate DROP**, **Copy name**.
+Lists user tables from `GetSchema("Tables")`, with search. System tables are not shown. Expand a table to see its columns (name, type, size, nullable). Right-click a table for: **Select top 100**, **Generate CREATE template**, **Generate ALTER template**, **Generate DROP**, **Copy name**.
 
 ### 3. Query workspace
 * The **Template** dropdown inserts a sample statement: SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE add/drop column, DROP TABLE, CREATE INDEX or Custom. If a table is selected in the explorer, its real table and column names are used. If the editor already holds your own SQL, you are asked before it is replaced.

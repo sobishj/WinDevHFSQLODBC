@@ -39,7 +39,7 @@ public partial class App : Application
             var notify = new NotificationService(snackbar);
             var theme = new AppThemeService();
 
-            var explorer = new ExplorerViewModel(schema, connections, notify, settings);
+            var explorer = new ExplorerViewModel(schema, connections, notify);
             var query = new QueryViewModel(queries, schema, connections, explorer, dialogs, notify, history, settings);
             var main = new MainViewModel(connections, profiles, dialogs, notify, explorer, query,
                 () => new ConnectionViewModel(drivers, profiles, connections, notify, dialogs));

@@ -19,17 +19,14 @@ public sealed partial class ExplorerViewModel : ObservableObject
     private readonly ISchemaService _schema;
     private readonly IConnectionService _connections;
     private readonly INotificationService _notify;
-    private readonly ISettingsService _settings;
     private CancellationTokenSource? _refreshCts;
     private string? _loadError;
 
-    public ExplorerViewModel(ISchemaService schema, IConnectionService connections, INotificationService notify, ISettingsService settings)
+    public ExplorerViewModel(ISchemaService schema, IConnectionService connections, INotificationService notify)
     {
         _schema = schema;
         _connections = connections;
         _notify = notify;
-        _settings = settings;
-        _showSystemTables = settings.Current.ShowSystemTables;
         TablesView = CollectionViewSource.GetDefaultView(Tables);
         TablesView.Filter = o => o is TableNodeViewModel t &&
                                  (string.IsNullOrWhiteSpace(SearchText) || t.Name.Contains(SearchText.Trim(), StringComparison.OrdinalIgnoreCase));
@@ -46,9 +43,6 @@ public sealed partial class ExplorerViewModel : ObservableObject
 
     [ObservableProperty]
     private string _searchText = "";
-
-    [ObservableProperty]
-    private bool _showSystemTables;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -69,13 +63,6 @@ public sealed partial class ExplorerViewModel : ObservableObject
     {
         TablesView.Refresh();
         UpdateEmptyState();
-    }
-
-    partial void OnShowSystemTablesChanged(bool value)
-    {
-        _settings.Current.ShowSystemTables = value;
-        _settings.Save();
-        _ = RefreshAsync();
     }
 
     public void OnSelectedNodeChanged(object? node) =>
@@ -110,7 +97,7 @@ public sealed partial class ExplorerViewModel : ObservableObject
         {
             var selectedName = SelectedTable?.Name;
             var expanded = Tables.Where(t => t.IsExpanded).Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var tables = await _schema.GetTablesAsync(ShowSystemTables, cts.Token);
+            var tables = await _schema.GetTablesAsync(includeSystem: false, cts.Token);
             if (cts.IsCancellationRequested) return;
 
             Tables.Clear();
@@ -133,7 +120,7 @@ public sealed partial class ExplorerViewModel : ObservableObject
             }
 
             var userTables = Tables.Count(t => !t.IsSystem);
-            Summary = $"{userTables} table{(userTables == 1 ? "" : "s")}" + (ShowSystemTables ? $" · {Tables.Count - userTables} system" : "");
+            Summary = $"{userTables} table{(userTables == 1 ? "" : "s")}";
         }
         catch (OperationCanceledException)
         {

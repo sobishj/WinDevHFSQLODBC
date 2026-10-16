@@ -14,6 +14,4 @@ public sealed class AppSettings
     public bool IsMaximized { get; set; }
 
     public int MaxRows { get; set; } = 1000;
-
-    public bool ShowSystemTables { get; set; }
 }

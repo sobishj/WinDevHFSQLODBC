@@ -134,7 +134,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -168,14 +167,8 @@
             PlaceholderText="Search tables"
             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
 
-        <CheckBox
-            Grid.Row="2"
-            Margin="0,0,0,8"
-            Content="Show system tables"
-            IsChecked="{Binding ShowSystemTables}" />
-
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
