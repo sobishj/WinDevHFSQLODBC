@@ -124,7 +124,7 @@ public sealed partial class QueryViewModel : ObservableObject
         IReadOnlyList<DbColumnInfo>? columns = null;
         if (table is not null) columns = await table.EnsureColumnsAsync();
         var sql = SqlTemplates.Build(option.Type, table?.Name, columns);
-        if (sql is not null) await SetEditorTextAsync(sql, askIfDirty: true);
+        if (sql is not null) await SetEditorTextAsync(sql, askIfDirty: false);
     }
 
     /// <summary>Replaces the editor content, asking first if it holds text the user typed.</summary>

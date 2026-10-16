@@ -111,7 +111,6 @@ public sealed record StatementTypeOption(StatementType Type, string Display)
         new(StatementType.AlterAddColumn, "ALTER TABLE (add column)"),
         new(StatementType.AlterDropColumn, "ALTER TABLE (drop column)"),
         new(StatementType.DropTable, "DROP TABLE"),
-        new(StatementType.CreateIndex, "CREATE INDEX"),
         new(StatementType.Custom, "Custom"),
     ];
 

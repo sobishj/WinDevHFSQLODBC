@@ -78,18 +78,6 @@
                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                             Text="{Binding TypeBadge}" />
                     </Border>
-                    <Border
-                        Margin="8,0,0,0"
-                        Padding="6,0"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource SystemFillColorSuccessBrush}"
-                        CornerRadius="4"
-                        Visibility="{Binding IsHighlighted, Converter={StaticResource BoolToVis}}">
-                        <TextBlock
-                            FontSize="11"
-                            Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"
-                            Text="updated" />
-                    </Border>
                 </StackPanel>
             </Border>
         </HierarchicalDataTemplate>
