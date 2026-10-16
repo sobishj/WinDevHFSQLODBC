@@ -96,12 +96,37 @@ public sealed partial class ConnectionViewModel : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
-    private OdbcAccessLayer _accessLayer = OdbcAccessLayer.Auto;
-
-    [ObservableProperty]
     private string _dataFolder = "";
 
-    public IReadOnlyList<OdbcAccessLayer> AccessLayers { get; } = [OdbcAccessLayer.Auto, OdbcAccessLayer.Managed, OdbcAccessLayer.Native];
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EffectiveConnectionString), nameof(IsClassic), nameof(IsClientServer))]
+    private HfsqlKind _kind = HfsqlKind.ClientServer;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EffectiveConnectionString))]
+    private string _classicDataDirectory = "";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EffectiveConnectionString))]
+    private string _classicAnalysisFile = "";
+
+    public bool IsClientServer
+    {
+        get => Kind == HfsqlKind.ClientServer;
+        set
+        {
+            if (value) Kind = HfsqlKind.ClientServer;
+        }
+    }
+
+    public bool IsClassic
+    {
+        get => Kind == HfsqlKind.Classic;
+        set
+        {
+            if (value) Kind = HfsqlKind.Classic;
+        }
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTestResult))]
@@ -187,8 +212,10 @@ public sealed partial class ConnectionViewModel : ObservableObject
         Password = Password ?? "",
         Dsn = SelectedDsn?.Name ?? SelectedProfile?.Dsn ?? "",
         RawConnectionString = RawConnectionString ?? "",
-        AccessLayer = AccessLayer,
         DataFolder = DataFolder?.Trim() ?? "",
+        Kind = Kind,
+        ClassicDataDirectory = ClassicDataDirectory?.Trim() ?? "",
+        ClassicAnalysisFile = ClassicAnalysisFile?.Trim() ?? "",
         LastUsedUtc = DateTime.UtcNow,
     };
 
@@ -208,8 +235,10 @@ public sealed partial class ConnectionViewModel : ObservableObject
             Password = value.Password;
             SelectedDsn = Dsns.FirstOrDefault(d => d.Name.Equals(value.Dsn, StringComparison.OrdinalIgnoreCase));
             RawConnectionString = value.RawConnectionString;
-            AccessLayer = value.AccessLayer;
             DataFolder = value.DataFolder ?? "";
+            Kind = value.Kind;
+            ClassicDataDirectory = value.ClassicDataDirectory ?? "";
+            ClassicAnalysisFile = value.ClassicAnalysisFile ?? "";
             TestSucceeded = null;
         }
         finally
@@ -241,8 +270,10 @@ public sealed partial class ConnectionViewModel : ObservableObject
         Password = "";
         SelectedDsn = null;
         RawConnectionString = "";
-        AccessLayer = OdbcAccessLayer.Auto;
         DataFolder = "";
+        Kind = HfsqlKind.ClientServer;
+        ClassicDataDirectory = "";
+        ClassicAnalysisFile = "";
         TestSucceeded = null;
     }
 
@@ -318,6 +349,27 @@ public sealed partial class ConnectionViewModel : ObservableObject
         };
         if (!string.IsNullOrWhiteSpace(DataFolder) && System.IO.Directory.Exists(DataFolder)) dialog.InitialDirectory = DataFolder;
         if (dialog.ShowDialog() == true) DataFolder = dialog.FolderName;
+    }
+
+    [RelayCommand]
+    private void BrowseClassicDataDirectory()
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Select the HFSQL Classic data folder (contains the .fic files)" };
+        if (System.IO.Directory.Exists(ClassicDataDirectory)) dialog.InitialDirectory = ClassicDataDirectory;
+        if (dialog.ShowDialog() == true) ClassicDataDirectory = dialog.FolderName;
+    }
+
+    [RelayCommand]
+    private void BrowseClassicAnalysisFile()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select the WinDev analysis file (.wdd)",
+            Filter = "WinDev analysis (*.wdd)|*.wdd|All files (*.*)|*.*",
+            CheckFileExists = true,
+        };
+        if (System.IO.File.Exists(ClassicAnalysisFile)) dialog.InitialDirectory = System.IO.Path.GetDirectoryName(ClassicAnalysisFile);
+        if (dialog.ShowDialog() == true) ClassicAnalysisFile = dialog.FileName;
     }
 
     [RelayCommand]
@@ -407,8 +459,11 @@ public sealed partial class ConnectionViewModel : ObservableObject
         string? problem = Mode switch
         {
             ConnectionMode.Fields when string.IsNullOrWhiteSpace(Driver) => "Select an ODBC driver.",
-            ConnectionMode.Fields when string.IsNullOrWhiteSpace(Server) => "Enter the server name or address.",
-            ConnectionMode.Fields when Port is <= 0 or > 65535 => "Enter a valid port (default 4900).",
+            ConnectionMode.Fields when Kind == HfsqlKind.Classic && string.IsNullOrWhiteSpace(ClassicDataDirectory) => "Select the HFSQL Classic data folder (REP).",
+            ConnectionMode.Fields when Kind == HfsqlKind.Classic && !System.IO.Directory.Exists(ClassicDataDirectory.Trim()) => $"The data folder does not exist or is not reachable: {ClassicDataDirectory}",
+            ConnectionMode.Fields when Kind == HfsqlKind.Classic && !string.IsNullOrWhiteSpace(ClassicAnalysisFile) && !System.IO.File.Exists(ClassicAnalysisFile.Trim()) => $"The analysis file does not exist: {ClassicAnalysisFile}",
+            ConnectionMode.Fields when Kind == HfsqlKind.ClientServer && string.IsNullOrWhiteSpace(Server) => "Enter the server name or address.",
+            ConnectionMode.Fields when Kind == HfsqlKind.ClientServer && Port is <= 0 or > 65535 => "Enter a valid port (default 4900).",
             ConnectionMode.Dsn when SelectedDsn is null => "Select a data source (DSN).",
             ConnectionMode.ConnectionString when string.IsNullOrWhiteSpace(RawConnectionString) => "Enter a connection string.",
             _ when !string.IsNullOrWhiteSpace(DataFolder) => Helpers.DataFolder.Check(DataFolder.Trim()),

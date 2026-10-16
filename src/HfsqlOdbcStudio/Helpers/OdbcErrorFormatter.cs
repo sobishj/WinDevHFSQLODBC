@@ -64,6 +64,8 @@ public static class OdbcErrorFormatter
         }
 
         sb.Append(ex.GetType().FullName).Append(": ").Append(ex.Message);
+        if (FindOdbcException(ex) is not null && string.IsNullOrWhiteSpace(ex.Message))
+            sb.Append("(the ODBC driver returned no error message or SQLSTATE)");
         for (var inner = ex.InnerException; inner is not null; inner = inner.InnerException)
             sb.AppendLine().Append("  ---> ").Append(inner.GetType().FullName).Append(": ").Append(inner.Message);
 
@@ -72,7 +74,7 @@ public static class OdbcErrorFormatter
             sb.AppendLine().AppendLine()
               .Append("This is not a server error: System.Data.Odbc could not read a 64-bit length or row-count value returned by the ODBC driver. ")
               .Append("If this was not a SELECT, the statement may already have been executed on the server. ")
-              .Append("Set \"ODBC access layer\" to Native (or Auto) in the connection profile.");
+              .Append("Reconnect so the app can switch to its native ODBC layer.");
         }
 
         return sb.ToString();

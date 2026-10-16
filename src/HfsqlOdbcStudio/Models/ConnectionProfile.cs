@@ -15,17 +15,14 @@ public enum ConnectionMode
     ConnectionString,
 }
 
-/// <summary>Which ODBC client layer executes statements.</summary>
-public enum OdbcAccessLayer
+/// <summary>HFSQL database engine used in "server fields" mode.</summary>
+public enum HfsqlKind
 {
-    /// <summary>System.Data.Odbc, switching to Native when the driver trips its 64-bit length handling.</summary>
-    Auto,
+    /// <summary>HFSQL Client/Server: Server Name / Server Port / Database / UID / PWD.</summary>
+    ClientServer,
 
-    /// <summary>Always System.Data.Odbc (OdbcConnection / OdbcCommand).</summary>
-    Managed,
-
-    /// <summary>Always the built-in direct odbc32.dll layer.</summary>
-    Native,
+    /// <summary>HFSQL Classic (HyperFile): data files in a folder (REP), optional analysis (ANA).</summary>
+    Classic,
 }
 
 /// <summary>A named, persisted connection profile. Secrets are stored DPAPI-protected.</summary>
@@ -47,7 +44,13 @@ public sealed class ConnectionProfile
 
     public string Dsn { get; set; } = "";
 
-    public OdbcAccessLayer AccessLayer { get; set; } = OdbcAccessLayer.Auto;
+    public HfsqlKind Kind { get; set; } = HfsqlKind.ClientServer;
+
+    /// <summary>HFSQL Classic: folder that contains the .fic/.ndx/.mmo data files (REP=).</summary>
+    public string ClassicDataDirectory { get; set; } = "";
+
+    /// <summary>HFSQL Classic: optional analysis file (.wdd) describing the data files (ANA=).</summary>
+    public string ClassicAnalysisFile { get; set; } = "";
 
     /// <summary>
     /// Working folder (process current directory) for every operation while connected; the driver reads and writes
@@ -76,6 +79,7 @@ public sealed class ConnectionProfile
     [JsonIgnore]
     public string DisplayTarget => Mode switch
     {
+        ConnectionMode.Fields when Kind == HfsqlKind.Classic => $"Classic {ClassicDataDirectory}",
         ConnectionMode.Fields => $"{Server}/{Database}",
         ConnectionMode.Dsn => $"DSN {Dsn}",
         _ => string.IsNullOrWhiteSpace(Name) ? "custom connection string" : Name,

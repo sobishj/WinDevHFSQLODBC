@@ -47,6 +47,7 @@ Click **Connection…** in the top bar.
 
 * **Server fields**: pick the ODBC driver, then enter server/host, port (4900), database, user and password. The driver list is read only from the 64-bit registry key `HKLM\SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers`, and any driver whose name contains "HFSQL" is pre-selected.
   The generated connection string is shown with the password masked. HFSQL keyword names can vary by driver version, so you can **Copy** it or click **Edit as connection string** to adjust it.
+  **Database type** switches between **HFSQL Client/Server** and **HFSQL Classic (HyperFile)**. Classic uses PC SOFT's `DRIVER={HFSQL};ANA=<analysis .wdd>;REP=<data folder>` string without user or password. In tests, the driver refused a Classic connection without an analysis (`ANA`) and gave no error message.
 * **Existing DSN**: choose a 64-bit System or User DSN.
 * **Connection string (advanced)**: a raw string, sent as-is. `%USER%` and `%PASSWORD%` are replaced with the credentials fields, so the password never has to be written into the string.
 
@@ -57,8 +58,6 @@ Click **Connection…** in the top bar.
 * a network path from another PC, e.g. `\\192.168.11.142\C$\HVW4HFCS\BDD\IndiaTest` or a share. The PC needs write access.
 
 The folder is checked for existence and write access when you connect. Leave it empty to use the app's folder.
-
-**ODBC access layer**: Auto (default), Managed (System.Data.Odbc) or Native (direct `odbc32.dll`). See *Troubleshooting*.
 
 Profiles are saved to `%AppData%\HfsqlOdbcStudio\profiles.json`. Passwords (and raw connection strings) are encrypted with **DPAPI, CurrentUser scope**. The last used profile is offered as **Connect to "…"** at startup.
 
@@ -108,12 +107,7 @@ Tech: .NET 8, WPF, MVVM (CommunityToolkit.Mvvm), System.Data.Odbc, WPF-UI (Fluen
 
 ## Troubleshooting
 
-* **"Arithmetic operation resulted in an overflow"**: some 64-bit ODBC drivers return row counts or length values as 32-bit numbers. .NET's System.Data.Odbc then fails on every statement, *after* the driver has already run it. The connection profile's **ODBC access layer** handles this:
-  * **Auto** (default) detects the problem at connect time and switches to the built-in native ODBC layer, which calls `odbc32.dll` directly and tolerates such values.
-  * **Native** always uses the native layer.
-  * **Managed** always uses System.Data.Odbc.
-
-  Both layers send your SQL to the driver unchanged. The layer in use is shown in the connection details.
+* **"Arithmetic operation resulted in an overflow"**: some 64-bit ODBC drivers return row counts or length values as 32-bit numbers. .NET's System.Data.Odbc then fails on every statement, *after* the driver has already run it. The app detects this when you connect and automatically switches to its built-in native ODBC layer, which calls `odbc32.dll` directly and handles such values. Your SQL is still sent to the driver unchanged. The layer in use is shown in the connection details.
 
 * **"Data source name not found and no default driver specified" (IM002)**: the driver or DSN name doesn't exist in the **64-bit** ODBC configuration. Install the 64-bit HFSQL ODBC driver, or create the DSN with the 64-bit ODBC administrator.
 * **Connection works but keywords seem ignored**: HFSQL connection-string keywords differ between driver versions. Switch to *Connection string (advanced)* and adjust the keys, for example `Server Name` / `Server Port`.

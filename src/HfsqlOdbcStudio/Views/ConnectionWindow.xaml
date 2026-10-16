@@ -146,6 +146,57 @@
                                 <ui:SymbolIcon FontSize="16" Symbol="ArrowClockwise24" />
                             </ui:Button>
                         </Grid>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Database type" />
+                        <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                            <RadioButton
+                                Margin="0,0,24,0"
+                                Content="HFSQL Client/Server"
+                                GroupName="HfKind"
+                                IsChecked="{Binding IsClientServer}" />
+                            <RadioButton
+                                Content="HFSQL Classic (HyperFile)"
+                                GroupName="HfKind"
+                                IsChecked="{Binding IsClassic}" />
+                        </StackPanel>
+
+                        <!--  HFSQL Classic  -->
+                        <StackPanel Visibility="{Binding IsClassic, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Data folder (REP) - folder that contains the .fic files" />
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBox PlaceholderText="e.g. C:\MyApp\Data  or  \\server\share\Data" Text="{Binding ClassicDataDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:Button
+                                    Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    Command="{Binding BrowseClassicDataDirectoryCommand}"
+                                    Content="Browse…"
+                                    Icon="{ui:SymbolIcon Folder24}" />
+                            </Grid>
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Analysis file (ANA, .wdd) - optional" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBox PlaceholderText="e.g. C:\My Projects\CRM\CRM.wdd" Text="{Binding ClassicAnalysisFile, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:Button
+                                    Grid.Column="1"
+                                    Margin="8,0,0,0"
+                                    Command="{Binding BrowseClassicAnalysisFileCommand}"
+                                    Content="Browse…"
+                                    Icon="{ui:SymbolIcon DocumentSearch24}" />
+                            </Grid>
+                            <TextBlock
+                                Margin="0,8,0,0"
+                                Style="{StaticResource CaptionText}"
+                                Text="Connection string per PC SOFT: DRIVER={HFSQL};ANA=&lt;.wdd&gt;;REP=&lt;data folder&gt;. User name and password are not used for Classic." />
+                        </StackPanel>
+
+                        <!--  HFSQL Client/Server  -->
+                        <StackPanel Visibility="{Binding IsClientServer, Converter={StaticResource BoolToVis}}">
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -163,6 +214,7 @@
                         </Grid>
                         <TextBlock Style="{StaticResource FieldLabel}" Text="Database" />
                         <ui:TextBox PlaceholderText="Database name on the HFSQL server" Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -339,25 +391,6 @@
                             Margin="0,8,0,0"
                             Style="{StaticResource CaptionText}"
                             Text="Used as the working folder for every operation while connected: CREATE / ALTER / DROP TABLE, CREATE INDEX, INSERT, UPDATE, DELETE, SELECT and the explorer. The HFSQL ODBC driver reads and writes table files (.fic/.ndx/.mmo) relative to this folder. Point it at the database folder of the HFSQL server: a local path when the app runs on the server, or a network share path from another PC (needs write access). Leave empty to use the app's folder." />
-                    </StackPanel>
-                </Border>
-
-                <!--  ODBC access layer  -->
-                <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
-                    <StackPanel>
-                        <TextBlock
-                            Margin="0,0,0,8"
-                            Style="{StaticResource SectionTitle}"
-                            Text="ODBC access layer" />
-                        <ComboBox
-                            Width="220"
-                            HorizontalAlignment="Left"
-                            ItemsSource="{Binding AccessLayers}"
-                            SelectedItem="{Binding AccessLayer}" />
-                        <TextBlock
-                            Margin="0,8,0,0"
-                            Style="{StaticResource CaptionText}"
-                            Text="Auto: uses System.Data.Odbc and switches to the built-in native ODBC layer when the driver returns 32-bit length values that .NET cannot read (&quot;Arithmetic operation resulted in an overflow&quot;). Both layers send your SQL to the driver unchanged." />
                     </StackPanel>
                 </Border>
 

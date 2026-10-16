@@ -30,6 +30,13 @@ public static partial class ConnectionStringFactory
         var sb = new StringBuilder();
         switch (p.Mode)
         {
+            case ConnectionMode.Fields when p.Kind == HfsqlKind.Classic:
+                // PC SOFT: DRIVER={HFSQL};ANA=<path of WDD file>;REP=<data directory>
+                sb.Append("DRIVER={").Append(p.Driver.Replace("}", "}}")).Append("};");
+                if (!string.IsNullOrWhiteSpace(p.ClassicAnalysisFile)) sb.Append("ANA=").Append(Escape(p.ClassicAnalysisFile.Trim())).Append(';');
+                sb.Append("REP=").Append(Escape(p.ClassicDataDirectory.Trim())).Append(';');
+                return sb.ToString();
+
             case ConnectionMode.Fields:
                 sb.Append("DRIVER={").Append(p.Driver.Replace("}", "}}")).Append("};");
                 sb.Append("Server Name=").Append(Escape(p.Server)).Append(';');

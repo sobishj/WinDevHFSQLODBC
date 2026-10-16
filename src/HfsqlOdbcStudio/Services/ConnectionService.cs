@@ -62,19 +62,28 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
             ct.ThrowIfCancellationRequested();
             DataFolder.Apply(profile.DataFolder);
             ConnectionInfo info;
-            using (var conn = OpenManaged(cs))
+            OdbcConnection opened;
+            try
+            {
+                opened = OpenManaged(cs);
+            }
+            catch (Exception managedError)
+            {
+                // System.Data.Odbc sets connection attributes some drivers reject, and may report no diagnostics.
+                // The native layer only calls SQLDriverConnect and returns the driver's own messages.
+                FileLog.Error("System.Data.Odbc could not open the connection; trying the native ODBC layer", managedError);
+                return OpenNativeOnly(cs, profile, managedError);
+            }
+
+            using (var conn = opened)
             {
                 info = ReadInfo(conn, profile);
-                if (profile.AccessLayer == OdbcAccessLayer.Native)
-                    return info with { UseNativeLayer = true, AccessLayerNote = "Native ODBC layer selected in the profile." };
-                if (profile.AccessLayer == OdbcAccessLayer.Managed)
-                    return info with { AccessLayerNote = "System.Data.Odbc selected in the profile." };
 
-                // Auto: a read-only catalog call shows whether System.Data.Odbc can cope with this driver.
+                // A read-only catalog call shows whether System.Data.Odbc can cope with this driver.
                 try
                 {
                     using var probe = conn.GetSchema("Tables");
-                    return info with { AccessLayerNote = "Auto: System.Data.Odbc works with this driver." };
+                    return info with { AccessLayerNote = "System.Data.Odbc works with this driver." };
                 }
                 catch (OverflowException ex)
                 {
@@ -91,10 +100,44 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
             return info with
             {
                 UseNativeLayer = true,
-                AccessLayerNote = "Auto: the driver returns 32-bit length/row-count values that System.Data.Odbc cannot read " +
+                AccessLayerNote = "The driver returns 32-bit length/row-count values that System.Data.Odbc cannot read " +
                                   "(\"Arithmetic operation resulted in an overflow\"), so the native ODBC layer is used.",
             };
         }, ct);
+    }
+
+    private ConnectionInfo OpenNativeOnly(string cs, ConnectionProfile profile, Exception managedError)
+    {
+        try
+        {
+            using var native = NativeOdbcConnection.Open(cs);
+        }
+        catch (NativeOdbcException nativeError) when (nativeError.Errors.Count > 0)
+        {
+            throw;
+        }
+        catch (Exception nativeError)
+        {
+            FileLog.Error("The native ODBC layer could not open the connection either", nativeError);
+            throw managedError;
+        }
+
+        var driverName = ResolveDriverName(profile);
+        var version = drivers.GetDriverVersion(driverName);
+        return new ConnectionInfo(
+            DriverName: driverName,
+            DriverFile: System.IO.Path.GetFileName(drivers.GetDriverFile(driverName)),
+            DriverVersion: version.Length > 0 ? version : "unknown",
+            DbmsName: "",
+            DbmsVersion: "",
+            ServerVersion: "",
+            Database: "",
+            DataSource: "",
+            UseNativeLayer: true,
+            AccessLayerNote: "System.Data.Odbc could not open this connection (" + OdbcErrorFormatter.Short(managedError) +
+                              "), so the native ODBC layer is used.",
+            DriverPath: drivers.GetDriverFile(driverName),
+            DataFolder: Environment.CurrentDirectory);
     }
 
     public void SetActive(ConnectionProfile profile, ConnectionInfo info)
@@ -155,13 +198,7 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
             FileLog.Error("Reading DataSourceInformation failed", ex);
         }
 
-        var driverName = profile.Mode switch
-        {
-            ConnectionMode.Fields => profile.Driver,
-            ConnectionMode.Dsn => drivers.GetDsnDriver(profile.Dsn) ?? "",
-            _ => ResolveRawDriver(profile.RawConnectionString),
-        };
-
+        var driverName = ResolveDriverName(profile);
         var driverVersion = drivers.GetDriverVersion(driverName);
 
         return new ConnectionInfo(
@@ -176,6 +213,13 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
             DriverPath: drivers.GetDriverFile(driverName),
             DataFolder: Environment.CurrentDirectory);
     }
+
+    private string ResolveDriverName(ConnectionProfile profile) => profile.Mode switch
+    {
+        ConnectionMode.Fields => profile.Driver,
+        ConnectionMode.Dsn => drivers.GetDsnDriver(profile.Dsn) ?? "",
+        _ => ResolveRawDriver(profile.RawConnectionString),
+    };
 
     private string ResolveRawDriver(string raw)
     {

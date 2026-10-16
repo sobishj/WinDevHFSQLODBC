@@ -136,7 +136,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         var server = profile.Mode == ConnectionMode.Fields ? profile.Server : info.DataSource is { Length: > 0 } ds ? ds : profile.DisplayTarget;
         var database = info.Database is { Length: > 0 } db ? db : profile.Database;
-        ConnectionText = $"Connected to {server}/{database}";
+        ConnectionText = profile.Mode == ConnectionMode.Fields && profile.Kind == HfsqlKind.Classic
+            ? $"Connected to HFSQL Classic: {profile.ClassicDataDirectory}"
+            : $"Connected to {server}/{database}";
         ConnectionDetail = $"{info.DriverName} {info.DriverVersion} · {info.DbmsName} {info.ServerVersion}".Replace("  ", " ").Trim();
         ConnectionToolTip = ConnectionViewModel.FormatInfo(info);
         Query.Log(LogLevel.Success, $"Connected to {server}/{database}", null, ConnectionViewModel.FormatInfo(info));
