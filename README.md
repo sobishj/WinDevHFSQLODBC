@@ -66,7 +66,7 @@ Profiles are saved to `%AppData%\HfsqlOdbcStudio\profiles.json`. Passwords (and 
 Lists user tables from `GetSchema("Tables")`, with search. System tables are not shown. Expand a table to see its columns (name, type, size, nullable). Right-click a table for: **Select top 100**, **Generate CREATE template**, **Generate ALTER template**, **Generate DROP**, **Copy name**.
 
 ### 3. Query workspace
-* The **Template** dropdown inserts a sample statement: SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE add/drop column, DROP TABLE, CREATE INDEX or Custom. If a table is selected in the explorer, its real table and column names are used. If the editor already holds your own SQL, you are asked before it is replaced.
+* The **Template** dropdown inserts a sample statement: SELECT, INSERT, UPDATE, DELETE, CREATE TABLE, ALTER TABLE add/drop column, DROP TABLE or Custom. If a table is selected in the explorer, its real table and column names are used. The template replaces the editor text right away; press **Ctrl+Z** to get your previous SQL back.
 * **Execute** with the button, **Ctrl+Enter** or **F5**. If text is selected, only the selection runs. Several statements separated by `;` run one after another, and execution stops at the first error.
 * Row-returning statements use `ExecuteReader` and fill the grid, which can be sorted and copied. **Max rows** defaults to 1000; 0 means unlimited. All other statements use `ExecuteNonQuery` and report rows affected. Every run shows its execution time.
 * **Cancel** stops a running statement. Queries run asynchronously, so the UI never freezes.
