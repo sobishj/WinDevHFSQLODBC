@@ -315,6 +315,33 @@
                     </StackPanel>
                 </Border>
 
+                <!--  Data file folder  -->
+                <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SectionTitle}"
+                            Text="Data file folder (HFSQL database folder)" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox PlaceholderText="e.g. C:\HVW4HFCS\BDD\IndiaTest  or  \\192.168.11.142\BDD\IndiaTest" Text="{Binding DataFolder, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:Button
+                                Grid.Column="1"
+                                Margin="8,0,0,0"
+                                Command="{Binding BrowseDataFolderCommand}"
+                                Content="Browse…"
+                                Icon="{ui:SymbolIcon Folder24}" />
+                        </Grid>
+                        <TextBlock
+                            Margin="0,8,0,0"
+                            Style="{StaticResource CaptionText}"
+                            Text="Used as the working folder for every operation while connected: CREATE / ALTER / DROP TABLE, CREATE INDEX, INSERT, UPDATE, DELETE, SELECT and the explorer. The HFSQL ODBC driver reads and writes table files (.fic/.ndx/.mmo) relative to this folder. Point it at the database folder of the HFSQL server: a local path when the app runs on the server, or a network share path from another PC (needs write access). Leave empty to use the app's folder." />
+                    </StackPanel>
+                </Border>
+
                 <!--  ODBC access layer  -->
                 <Border Margin="0,0,0,16" Style="{StaticResource CardBorder}">
                     <StackPanel>

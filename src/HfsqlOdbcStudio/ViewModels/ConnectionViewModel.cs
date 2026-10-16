@@ -98,6 +98,9 @@ public sealed partial class ConnectionViewModel : ObservableObject
     [ObservableProperty]
     private OdbcAccessLayer _accessLayer = OdbcAccessLayer.Auto;
 
+    [ObservableProperty]
+    private string _dataFolder = "";
+
     public IReadOnlyList<OdbcAccessLayer> AccessLayers { get; } = [OdbcAccessLayer.Auto, OdbcAccessLayer.Managed, OdbcAccessLayer.Native];
 
     [ObservableProperty]
@@ -185,6 +188,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
         Dsn = SelectedDsn?.Name ?? SelectedProfile?.Dsn ?? "",
         RawConnectionString = RawConnectionString ?? "",
         AccessLayer = AccessLayer,
+        DataFolder = DataFolder?.Trim() ?? "",
         LastUsedUtc = DateTime.UtcNow,
     };
 
@@ -205,6 +209,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
             SelectedDsn = Dsns.FirstOrDefault(d => d.Name.Equals(value.Dsn, StringComparison.OrdinalIgnoreCase));
             RawConnectionString = value.RawConnectionString;
             AccessLayer = value.AccessLayer;
+            DataFolder = value.DataFolder ?? "";
             TestSucceeded = null;
         }
         finally
@@ -237,6 +242,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
         SelectedDsn = null;
         RawConnectionString = "";
         AccessLayer = OdbcAccessLayer.Auto;
+        DataFolder = "";
         TestSucceeded = null;
     }
 
@@ -304,6 +310,17 @@ public sealed partial class ConnectionViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void BrowseDataFolder()
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = @"Select the HFSQL database folder (e.g. C:\HVW4HFCS\BDD\IndiaTest or \\server\share\IndiaTest)",
+        };
+        if (!string.IsNullOrWhiteSpace(DataFolder) && System.IO.Directory.Exists(DataFolder)) dialog.InitialDirectory = DataFolder;
+        if (dialog.ShowDialog() == true) DataFolder = dialog.FolderName;
+    }
+
+    [RelayCommand]
     private void Cancel() => CloseRequested?.Invoke(this, false);
 
     private async Task<(ConnectionProfile? Profile, ConnectionInfo? Info)> TestCoreAsync(CancellationToken ct)
@@ -343,6 +360,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
         $"Server version:  {info.ServerVersion}",
         $"Database:        {info.Database}",
         $"Data source:     {info.DataSource}",
+        $"Data folder:     {info.DataFolder}",
         $"ODBC layer:      {info.AccessLayerDisplay}",
         info.AccessLayerNote,
     ]).TrimEnd();
@@ -393,6 +411,7 @@ public sealed partial class ConnectionViewModel : ObservableObject
             ConnectionMode.Fields when Port is <= 0 or > 65535 => "Enter a valid port (default 4900).",
             ConnectionMode.Dsn when SelectedDsn is null => "Select a data source (DSN).",
             ConnectionMode.ConnectionString when string.IsNullOrWhiteSpace(RawConnectionString) => "Enter a connection string.",
+            _ when !string.IsNullOrWhiteSpace(DataFolder) => Helpers.DataFolder.Check(DataFolder.Trim()),
             _ => null,
         };
         if (problem is null) return true;

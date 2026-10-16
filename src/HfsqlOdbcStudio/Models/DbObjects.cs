@@ -78,7 +78,8 @@ public sealed record ConnectionInfo(
     string DataSource,
     bool UseNativeLayer = false,
     string AccessLayerNote = "",
-    string DriverPath = "")
+    string DriverPath = "",
+    string DataFolder = "")
 {
     public string AccessLayerDisplay => UseNativeLayer ? "Native ODBC (odbc32.dll)" : "System.Data.Odbc";
 }

@@ -49,6 +49,7 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
         return Task.Run<IOdbcSession>(() =>
         {
             ct.ThrowIfCancellationRequested();
+            DataFolder.Apply(profile.DataFolder);
             return native ? new NativeOdbcSession(NativeOdbcConnection.Open(cs)) : new ManagedOdbcSession(OpenManaged(cs));
         }, ct);
     }
@@ -59,6 +60,7 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
         return await Task.Run(() =>
         {
             ct.ThrowIfCancellationRequested();
+            DataFolder.Apply(profile.DataFolder);
             ConnectionInfo info;
             using (var conn = OpenManaged(cs))
             {
@@ -109,6 +111,7 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
         ActiveInfo = null;
         try
         {
+            DataFolder.Apply(null);
             OdbcConnection.ReleaseObjectPool();
         }
         catch (Exception ex)
@@ -170,7 +173,8 @@ public sealed class ConnectionService(IOdbcDriverService drivers) : IConnectionS
             ServerVersion: Safe(() => conn.ServerVersion),
             Database: Safe(() => conn.Database),
             DataSource: Safe(() => conn.DataSource),
-            DriverPath: drivers.GetDriverFile(driverName));
+            DriverPath: drivers.GetDriverFile(driverName),
+            DataFolder: Environment.CurrentDirectory);
     }
 
     private string ResolveRawDriver(string raw)

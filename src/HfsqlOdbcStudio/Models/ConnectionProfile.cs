@@ -49,6 +49,13 @@ public sealed class ConnectionProfile
 
     public OdbcAccessLayer AccessLayer { get; set; } = OdbcAccessLayer.Auto;
 
+    /// <summary>
+    /// Working folder (process current directory) for every operation while connected; the driver reads and writes
+    /// table data files relative to it.
+    /// Set it to the HFSQL server's database folder, locally or as a UNC path. Empty = the app's startup folder.
+    /// </summary>
+    public string DataFolder { get; set; } = "";
+
     /// <summary>DPAPI (CurrentUser) protected password, base64.</summary>
     public string? ProtectedPassword { get; set; }
 

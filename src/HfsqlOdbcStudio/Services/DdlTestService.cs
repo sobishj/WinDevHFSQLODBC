@@ -288,6 +288,7 @@ public sealed class DdlTestService(IConnectionService connections, ISchemaServic
             ("Database", info?.Database is { Length: > 0 } db ? db : run.ServerTarget),
             ("Target", run.ServerTarget),
             ("Connection string", run.MaskedConnectionString),
+            ("Data file folder", info?.DataFolder ?? ""),
         };
 
         var sb = new StringBuilder();
